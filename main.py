@@ -42,21 +42,114 @@ def flag(name):
 
 st.markdown("""
 <style>
-.match-card {border: 1px solid rgba(128,128,128,.35); border-radius: 12px;
-             padding: 14px 18px; margin-bottom: 12px;}
-.prob-bar {display: flex; height: 26px; border-radius: 6px; overflow: hidden;
-           font-size: 13px; font-weight: 600; color: white; margin: 6px 0;}
+/* ⚽ World Cup Festival theme — dark pitch, gold trophy, floodlight green */
+html, body, [data-testid="stAppViewContainer"] {background: #0a0e14;}
+[data-testid="stHeader"] {background: rgba(0,0,0,0);}
+[data-testid="stSidebar"] {background: #0d1117;
+                           border-right: 2px solid rgba(255,215,0,.55);}
+h1, h2, h3 {font-weight: 900 !important; letter-spacing: .4px;}
+
+.wc-title {font-size: 44px; font-weight: 900; line-height: 1.1;
+           background: linear-gradient(90deg, #FFD700, #fff3b0 45%, #FFD700);
+           -webkit-background-clip: text; background-clip: text;
+           color: transparent; text-shadow: 0 0 32px rgba(255,215,0,.25);}
+.wc-sub {color: #00FF87; font-weight: 700; font-size: 15px;
+         margin: 2px 0 20px 2px; letter-spacing: .5px;}
+
+.match-card {background: #11161f; border: 1px solid rgba(255,215,0,.45);
+             border-radius: 14px; padding: 14px 18px; margin-bottom: 12px;
+             transition: box-shadow .2s, transform .2s;}
+.match-card:hover {box-shadow: 0 0 20px rgba(255,215,0,.35);
+                   transform: translateY(-1px);}
+.teams-line {display: flex; justify-content: space-between;
+             align-items: center; gap: 8px; flex-wrap: wrap;
+             font-size: 19px; font-weight: 800; color: #fff;}
+.vs {color: #ff3b3b; font-weight: 900; font-size: 22px;
+     text-shadow: 0 0 12px rgba(255,59,59,.65);}
+.kickoff {color: #FFD700; font-size: 13px; font-weight: 700;
+          margin-bottom: 7px; letter-spacing: .3px;}
+.kick {color: #9aa4b2; font-size: 13px;}
+
+.prob-bar {display: flex; height: 28px; border-radius: 8px; overflow: hidden;
+           font-size: 13px; font-weight: 700; margin: 8px 0;
+           border: 1px solid rgba(255,255,255,.15);}
 .prob-bar div {display:flex; align-items:center; justify-content:center;
                white-space:nowrap; overflow:hidden;}
-.kick {color: #888; font-size: 13px;}
+
+.stButton > button {background: #FFD700 !important; color: #0a0a0a !important;
+                    font-weight: 800 !important; border: none !important;
+                    border-radius: 999px !important;}
+.stButton > button:hover {box-shadow: 0 0 16px rgba(255,215,0,.75);}
+
+[data-testid="stMetric"] {background: #11161f; border-radius: 12px;
+                          border: 1px solid rgba(0,255,135,.35);
+                          padding: 10px 14px; transition: box-shadow .2s;}
+[data-testid="stMetric"]:hover {box-shadow: 0 0 18px rgba(0,255,135,.5);}
+[data-testid="stMetricValue"] {color: #FFD700;}
+
+.group-card {background: #11161f; border: 1px solid rgba(255,215,0,.4);
+             border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;}
+.group-name {font-size: 24px; font-weight: 900; color: #FFD700;
+             margin-bottom: 8px; letter-spacing: 1px;}
+.wc-table {width: 100%; border-collapse: collapse; font-size: 14px;
+           color: #eee;}
+.wc-table th {background: #FFD700; color: #0a0a0a; font-weight: 800;
+              padding: 6px 9px; text-align: left;}
+.wc-table td {padding: 6px 9px;
+              border-bottom: 1px solid rgba(255,255,255,.07);}
+.wc-table tr.adv  {background: rgba(0,255,135,.13);
+                   border-left: 4px solid #00FF87;}
+.wc-table tr.wild {background: rgba(255,215,0,.10);
+                   border-left: 4px solid #FFD700;}
+.wc-table tr.out  {background: rgba(255,77,87,.12);
+                   border-left: 4px solid #ff4d57;}
+
 .bracket-slot {border-radius: 8px; padding: 4px 8px; margin: 2px 0;
                font-size: 13px;}
-.confirmed {background: rgba(46,160,67,.18); border-left: 3px solid #2ea043;}
-.projected {background: rgba(128,128,128,.12); border-left: 3px solid #999;
-            color: #999; font-style: italic;}
-.played {background: rgba(31,111,235,.15); border-left: 3px solid #1f6feb;}
+.confirmed {background: rgba(255,255,255,.08); border-left: 3px solid #00FF87;
+            color: #fff; font-weight: 700;}
+.projected {background: rgba(128,128,128,.10); border-left: 3px solid #777;
+            color: #969fab; font-style: italic;}
+.played {background: rgba(255,215,0,.14); border-left: 3px solid #FFD700;
+         color: #FFD700; font-weight: 800;}
+
+.wc-footer {text-align: center; color: #9aa4b2; font-weight: 600;
+            margin-top: 40px; padding: 14px 0 4px 0;
+            border-top: 1px solid rgba(255,215,0,.35);}
+
+@media (max-width: 640px) {
+  .wc-title {font-size: 28px;}
+  .teams-line {font-size: 16px;}
+  .vs {font-size: 18px;}
+  .group-name {font-size: 19px;}
+}
 </style>
 """, unsafe_allow_html=True)
+
+
+KICKOFF_DAY = date(2026, 6, 11)
+FINAL_DAY = date(2026, 7, 19)
+
+
+def festival_header():
+    today = date.today()
+    if today < KICKOFF_DAY:
+        n = (KICKOFF_DAY - today).days
+        sub = f"⏳ Kick-off in {n} day{'s' if n != 1 else ''}"
+    elif today <= FINAL_DAY:
+        sub = f"🔥 Tournament Day {(today - KICKOFF_DAY).days + 1} of 39"
+    else:
+        sub = "🏆 Tournament complete"
+    st.markdown(
+        f'<div class="wc-title">⚽ FIFA WORLD CUP 2026 🏆</div>'
+        f'<div class="wc-sub">{sub} · {today:%A %d %B %Y} · '
+        f'USA 🇺🇸 · Mexico 🇲🇽 · Canada 🇨🇦 🌍</div>',
+        unsafe_allow_html=True)
+
+
+def festival_footer():
+    st.markdown('<div class="wc-footer">Powered by ⚽ data &amp; 🤖 AI '
+                'predictions · 🌍🎯🔥</div>', unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -80,11 +173,16 @@ def _projections(results_key):
 
 
 def prob_bar(p1, px, p2, name1, name2):
+    # favorite glows green, underdog burns red, draw stays neutral
+    if p1 >= p2:
+        c1, t1c, c2, t2c = "#00FF87", "#06250f", "#ff4d57", "#ffffff"
+    else:
+        c1, t1c, c2, t2c = "#ff4d57", "#ffffff", "#00FF87", "#06250f"
     return f"""
 <div class="prob-bar">
-  <div style="width:{p1 * 100:.1f}%;background:#1f6feb;">{name1} {p1 * 100:.0f}%</div>
-  <div style="width:{px * 100:.1f}%;background:#6e7681;">draw {px * 100:.0f}%</div>
-  <div style="width:{p2 * 100:.1f}%;background:#d29922;">{name2} {p2 * 100:.0f}%</div>
+  <div style="width:{p1 * 100:.1f}%;background:{c1};color:{t1c};">{name1} {p1 * 100:.0f}%</div>
+  <div style="width:{px * 100:.1f}%;background:#3a4150;color:#dfe5ec;">draw {px * 100:.0f}%</div>
+  <div style="width:{p2 * 100:.1f}%;background:{c2};color:{t2c};">{name2} {p2 * 100:.0f}%</div>
 </div>"""
 
 
@@ -111,7 +209,7 @@ def show_prediction(pred, knockout=False):
 # PAGE 1 — Today's matches
 # ---------------------------------------------------------------------------
 def page_today(schedule, results, predictor):
-    st.header("📅 Today's Matches")
+    st.header("📅 TODAY'S MATCHES 🔥")
     dates = sorted({e["date"] for e in schedule})
     today = date.today().isoformat()
     default = today if today in dates else min((d for d in dates if d >= today),
@@ -124,19 +222,21 @@ def page_today(schedule, results, predictor):
         st.info("No matches scheduled on this day — pick another date. "
                 "The group stage runs 11–27 June, knockouts 28 June – 19 July.")
         return
+    correct_now = []
     for e in todays:
         res = results["results"].get(e["id"])
         t1, t2 = e["team1"], e["team2"]
         if res and res.get("teams"):
             t1, t2 = res["teams"]
         known = t1 in TEAMS and t2 in TEAMS
-        title = (f"{flag(t1)} **{t1}**  vs  **{t2}** {flag(t2)}" if known
-                 else f"**{t1}**  vs  **{t2}**")
+        left = f"{flag(t1)} {t1}" if known else t1
+        right = f"{t2} {flag(t2)}" if known else t2
         stage = e["group"] and f"Group {e['group']}" or e["stage"]
         with st.container():
-            st.markdown(f"""<div class="match-card">{title}<br>
-<span class="kick">🏟️ {e['venue']} · ⏰ {e['time']} · {stage}</span></div>""",
-                        unsafe_allow_html=True)
+            st.markdown(f"""<div class="match-card">
+<div class="kickoff">⏰ KICK-OFF {e['time']} · 🏟️ {e['venue']} · 🎯 {stage}</div>
+<div class="teams-line"><span>{left}</span><span class="vs">VS</span><span>{right}</span></div>
+</div>""", unsafe_allow_html=True)
             if not known:
                 st.caption("Teams not decided yet — check the bracket page.")
                 continue
@@ -151,19 +251,29 @@ def page_today(schedule, results, predictor):
                 predicted = ("1" if pred["p1"] == max(pred["p1"], pred["px"], pred["p2"])
                              else "2" if pred["p2"] == max(pred["p1"], pred["px"], pred["p2"])
                              else "x")
-                hit = "✅ outcome predicted correctly" if actual == predicted \
-                    else "❌ model got the outcome wrong"
+                if actual == predicted:
+                    hit = "✅ outcome predicted correctly 🎯"
+                    correct_now.append(e["id"])
+                else:
+                    hit = "❌ model got the outcome wrong"
                 st.success(f"**FT: {t1} {score} {t2}**  ·  model predicted "
                            f"{pred['score'][0]}-{pred['score'][1]}  ·  {hit}")
             show_prediction(pred, knockout=e["stage"] != "Group")
             st.divider()
+
+    celebrated = st.session_state.setdefault("celebrated", set())
+    fresh = [mid for mid in correct_now if mid not in celebrated]
+    if fresh:
+        celebrated.update(fresh)
+        st.balloons()
+        st.toast("🎉 The model called it! Correct prediction! ⚽🏆")
 
 
 # ---------------------------------------------------------------------------
 # PAGE 2 — Match predictor
 # ---------------------------------------------------------------------------
 def page_predictor(schedule, results, predictor, projections):
-    st.header("🔮 Match Predictor")
+    st.header("🔮 MATCH PREDICTOR 🎯")
     names = sorted(TEAMS)
     c1, c2, c3 = st.columns([4, 4, 2])
     t1 = c1.selectbox("Team 1", names, index=names.index("Argentina"))
@@ -212,8 +322,26 @@ def page_predictor(schedule, results, predictor, projections):
 # ---------------------------------------------------------------------------
 # PAGE 3 — Group stage
 # ---------------------------------------------------------------------------
+def group_table_html(letter, rows):
+    cls_for_pos = {1: "adv", 2: "adv", 3: "wild", 4: "out"}
+    body = ""
+    for pos, r in enumerate(rows, 1):
+        body += (f'<tr class="{cls_for_pos[pos]}"><td>{pos}</td>'
+                 f'<td>{flag(r["team"])} {r["team"]}</td>'
+                 f'<td>{r["P"]}</td><td>{r["W"]}</td><td>{r["D"]}</td>'
+                 f'<td>{r["L"]}</td><td>{r["GF"]}</td><td>{r["GA"]}</td>'
+                 f'<td>{r["GD"]:+d}</td><td><b>{r["Pts"]}</b></td></tr>')
+    return (f'<div class="group-card">'
+            f'<div class="group-name">GROUP {letter} ⚽</div>'
+            f'<table class="wc-table"><tr><th>#</th><th>Team</th><th>P</th>'
+            f'<th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th>'
+            f'<th>GD</th><th>Pts</th></tr>{body}</table>'
+            f'<div class="kick">🟢 top 2 advance · 🟡 3rd may advance as '
+            f'best-third wild card · 🔴 eliminated</div></div>')
+
+
 def page_groups(schedule, results, predictor, projections):
-    st.header("📊 Group Stage — live standings")
+    st.header("📊 GROUP STAGE — LIVE STANDINGS 🌍")
     done = sum(1 for e in schedule if e["stage"] == "Group"
                and e["id"] in results["results"])
     st.caption(f"{done}/72 group matches played · standings update "
@@ -223,12 +351,8 @@ def page_groups(schedule, results, predictor, projections):
         with tab:
             rows, played, remaining = full_group_rows(letter, schedule,
                                                       results["results"])
-            df = pd.DataFrame([{"Team": f"{flag(r['team'])} {r['team']}",
-                                "P": r["P"], "W": r["W"], "D": r["D"],
-                                "L": r["L"], "GF": r["GF"], "GA": r["GA"],
-                                "GD": r["GD"], "Pts": r["Pts"]}
-                               for r in rows])
-            st.dataframe(df, hide_index=True, width="stretch")
+            st.markdown(group_table_html(letter, rows),
+                        unsafe_allow_html=True)
 
             c1, c2 = st.columns(2)
             with c1:
@@ -265,11 +389,12 @@ def slot_html(slot, result_cls=""):
 
 
 def page_bracket(schedule, results, predictor, projections):
-    st.header("🏆 Tournament Bracket")
-    st.caption("🟩 confirmed by real results · grey/italic = model projection "
-               "(with probability of filling that slot) · 🟦 winner of a played "
-               "match. Projections are never chained more than one round ahead "
-               "— no champion prediction here, that's football's job.")
+    st.header("🏆 TOURNAMENT BRACKET — ROAD TO THE FINAL 🔥")
+    st.caption("⚪ bright = confirmed by real results · grey/italic = model "
+               "projection (with probability of filling that slot) · 🟡 gold = "
+               "score of a played match. Projections are never chained more "
+               "than one round ahead — no champion prediction here, that's "
+               "football's job. 🔥")
     entries = resolve_bracket(schedule, results["results"], predictor,
                               projections)
     by_stage = {}
@@ -305,7 +430,7 @@ def page_bracket(schedule, results, predictor, projections):
 # PAGE 5 — Form tracker
 # ---------------------------------------------------------------------------
 def page_form(schedule, results, predictor):
-    st.header("📈 Form Tracker")
+    st.header("📈 FORM TRACKER ⚡")
     timeline = predictor.momentum_timeline()
     rows = []
     for name, meta in TEAMS.items():
@@ -417,13 +542,20 @@ def sidebar_data_tools(schedule, results, predictor, projections):
 
 
 def main():
-    st.sidebar.title("⚽ World Cup 2026")
-    st.sidebar.caption("Match-by-match predictor · USA · Mexico · Canada")
+    if "welcomed" not in st.session_state:
+        st.session_state.welcomed = True
+        st.toast("⚽ Welcome to the World Cup 2026 Festival! 🌍🔥",
+                 icon="🏆")
+
+    st.sidebar.title("⚽ WORLD CUP 2026 🏆")
+    st.sidebar.caption("Match-by-match predictor · 🇺🇸 USA · 🇲🇽 Mexico · "
+                       "🇨🇦 Canada")
     page = st.sidebar.radio("Pages", [
         "📅 Today's Matches", "🔮 Match Predictor", "📊 Group Stage",
         "🏆 Bracket", "📈 Form Tracker"], label_visibility="collapsed")
 
     schedule, results, predictor, projections = get_state()
+    festival_header()
     sidebar_data_tools(schedule, results, predictor, projections)
 
     if page.startswith("📅"):
@@ -437,6 +569,7 @@ def main():
     else:
         page_form(schedule, results, predictor)
 
+    festival_footer()
     st.sidebar.divider()
     st.sidebar.caption(
         "Data: FIFA ranking (June 2026) · openfootball/worldcup.json "
