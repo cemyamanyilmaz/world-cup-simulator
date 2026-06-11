@@ -121,6 +121,30 @@ h1, h2, h3 {font-family: var(--wc-display) !important;
            border: 2px solid var(--wc-navy); padding: 3px 12px;
            display: inline-block; box-shadow: 3px 3px 0 rgba(10,22,40,.12);}
 
+/* unified match centre */
+.summary-bar {display: flex; gap: 10px; flex-wrap: wrap; margin: 2px 0 16px;}
+.sum-chip {font-family: var(--wc-display); letter-spacing: 1.2px;
+           font-size: 16px; background: #fff; color: var(--wc-navy);
+           border: 2px solid var(--wc-navy); padding: 4px 14px;
+           box-shadow: 4px 4px 0 rgba(10,22,40,.1);}
+.sum-chip.red {border-color: var(--wc-red); color: var(--wc-red);}
+.sum-chip.green {border-color: var(--wc-green); color: var(--wc-green);}
+.date-head {font-family: var(--wc-display); font-size: 25px;
+            letter-spacing: 2px; color: var(--wc-navy);
+            margin: 26px 0 10px; padding-bottom: 4px;
+            border-bottom: 4px solid var(--wc-red);}
+.score-big {font-family: var(--wc-display); font-size: 36px;
+            color: var(--wc-navy); letter-spacing: 2px; line-height: 1;}
+.verdict {font-weight: 800; font-size: 12.5px; padding: 2px 10px;
+          display: inline-block;}
+.verdict.ok {background: #E7F6EE; color: var(--wc-green);
+             border-left: 4px solid var(--wc-green);}
+.verdict.bad {background: #FBEAEA; color: var(--wc-red);
+              border-left: 4px solid var(--wc-red);}
+.mini {font-size: 13px; color: #5A6470; font-weight: 600; margin-top: 6px;}
+.match-card.done {border-top-color: var(--wc-navy);}
+.match-card.liveg {border-top-color: var(--wc-green);}
+
 .prob-bar {display: flex; height: 26px; border-radius: 0; overflow: hidden;
            font-size: 13px; font-weight: 700; margin: 8px 0;
            border: 1.5px solid rgba(10,22,40,.2);}
@@ -318,89 +342,159 @@ def prob_bar(p1, px, p2, name1, name2):
 </div>"""
 
 
-def show_prediction(pred, knockout=False):
-    t1, t2 = pred["team1"], pred["team2"]
-    st.markdown(prob_bar(pred["p1"], pred["px"], pred["p2"],
-                         f"{flag(t1)} {TEAMS[t1].code}",
-                         f"{TEAMS[t2].code} {flag(t2)}"),
-                unsafe_allow_html=True)
-    cols = st.columns(3)
-    cols[0].metric("Predicted score", f"{pred['score'][0]} - {pred['score'][1]}")
-    cols[1].metric("Expected goals", f"{pred['xg1']:.2f} : {pred['xg2']:.2f}")
-    cols[2].metric("Confidence", f"{pred['confidence']:.0f}%")
-    if knockout and "adv1" in pred:
-        st.caption(f"Advance probability (incl. extra time & penalties): "
-                   f"{t1} **{pred['adv1'] * 100:.0f}%** · "
-                   f"{t2} **{pred['adv2'] * 100:.0f}%**")
-    with st.expander("🔑 Key factors"):
-        for f in pred["factors"]:
-            st.markdown(f"- {f}")
+TR_MONTHS = {1: "OCAK", 2: "ŞUBAT", 3: "MART", 4: "NİSAN", 5: "MAYIS",
+             6: "HAZİRAN", 7: "TEMMUZ", 8: "AĞUSTOS", 9: "EYLÜL",
+             10: "EKİM", 11: "KASIM", 12: "ARALIK"}
+TR_DAYS = ["PAZARTESİ", "SALI", "ÇARŞAMBA", "PERŞEMBE", "CUMA",
+           "CUMARTESİ", "PAZAR"]
+
+
+def tr_date(iso):
+    d = date.fromisoformat(iso)
+    return f"{d.day} {TR_MONTHS[d.month]} {d.year} · {TR_DAYS[d.weekday()]}"
+
+
+def form_icon(predictor, team):
+    """🔥 hot / ➡️ steady / ❄️ cold — driven by earned momentum, which moves
+    after every completed match (upset win heats up, favourite losing
+    freezes, expected results stay steady)."""
+    mom = predictor.momentum(team)
+    return "🔥" if mom >= 8 else ("❄️" if mom <= -8 else "➡️")
+
+
+def momentum_delta(predictor, team, label):
+    for _d, lab, delta, _cum in predictor.momentum_timeline().get(team, []):
+        if lab == label:
+            return delta
+    return None
+
+
+def flagged_label(label):
+    """Prefix every known team name inside a free-text label with its flag."""
+    for nm in sorted(TEAMS, key=len, reverse=True):
+        if nm in label:
+            label = label.replace(nm, f"{flag(nm)} {nm}", 1)
+    return label
 
 
 # ---------------------------------------------------------------------------
-# PAGE 1 — Today's matches
+# PAGE 1 — unified match centre: past · live · upcoming on one page
 # ---------------------------------------------------------------------------
 def page_today(schedule, results, predictor):
-    st.header("📅 TODAY'S MATCHES 🔥")
-    dates = sorted({e["date"] for e in schedule})
-    today = date.today().isoformat()
-    default = today if today in dates else min((d for d in dates if d >= today),
-                                               default=dates[-1])
-    picked = st.date_input("Match day", value=date.fromisoformat(default),
-                           min_value=date.fromisoformat(dates[0]),
-                           max_value=date.fromisoformat(dates[-1])).isoformat()
-    todays = [e for e in schedule if e["date"] == picked]
-    if not todays:
-        st.info("No matches scheduled on this day — pick another date. "
-                "The group stage runs 11–27 June, knockouts 28 June – 19 July.")
-        return
-    correct_now = []
-    for e in todays:
-        res = results["results"].get(e["id"])
+    st.header("📅 MAÇ MERKEZİ")
+    res = results["results"]
+    today_iso = date.today().isoformat()
+
+    enriched = []
+    n_done = n_live = n_up = n_hit = 0
+    for e in schedule:
+        rr = res.get(e["id"])
         t1, t2 = e["team1"], e["team2"]
-        if res and res.get("teams"):
-            t1, t2 = res["teams"]
+        if rr and rr.get("teams"):
+            t1, t2 = rr["teams"]
         known = t1 in TEAMS and t2 in TEAMS
-        left = f"{flag(t1)} {t1}" if known else t1
-        right = f"{t2} {flag(t2)}" if known else t2
-        stage = e["group"] and f"Group {e['group']}" or e["stage"]
-        badge = ('<span class="live-badge">● CANLI</span>'
-                 if is_live(e, results["results"]) else '')
-        with st.container():
-            st.markdown(f"""<div class="match-card">
-<div class="kickoff">{badge}⏰ KICK-OFF {e['time']} · 🏟️ {e['venue']} · 🎯 {stage}</div>
-<div class="teams-line"><span>{left}</span><span class="vs">VS</span><span>{right}</span></div>
-</div>""", unsafe_allow_html=True)
-            if not known:
-                st.caption("Teams not decided yet — check the bracket page.")
-                continue
+        if rr and known:
+            status = "done"
+            n_done += 1
+        elif known and is_live(e, res):
+            status = "live"
+            n_live += 1
+        else:
+            status = "up"
+            n_up += 1
+        pred = hit = None
+        if known:
             pred = predictor.predict(t1, t2, knockout=e["stage"] != "Group",
                                      match_date=e["date"])
-            if res:
-                score = f"{res['s1']}-{res['s2']}"
-                if res.get("pens"):
-                    score += f" ({res['pens'][0]}-{res['pens'][1]} pens)"
-                actual = ("1" if res["s1"] > res["s2"]
-                          else "2" if res["s1"] < res["s2"] else "x")
-                predicted = ("1" if pred["p1"] == max(pred["p1"], pred["px"], pred["p2"])
-                             else "2" if pred["p2"] == max(pred["p1"], pred["px"], pred["p2"])
-                             else "x")
-                if actual == predicted:
-                    hit = "✅ outcome predicted correctly 🎯"
-                    correct_now.append(e["id"])
-                else:
-                    hit = "❌ model got the outcome wrong"
-                st.success(f"**FT: {t1} {score} {t2}**  ·  model predicted "
-                           f"{pred['score'][0]}-{pred['score'][1]}  ·  {hit}")
-            show_prediction(pred, knockout=e["stage"] != "Group")
-            st.divider()
+            if status == "done":
+                actual = ("1" if rr["s1"] > rr["s2"] else
+                          "2" if rr["s1"] < rr["s2"] else "x")
+                best = max(pred["p1"], pred["px"], pred["p2"])
+                predicted = ("1" if pred["p1"] == best else
+                             "2" if pred["p2"] == best else "x")
+                hit = actual == predicted
+                n_hit += hit
+        enriched.append((e, rr, t1, t2, known, status, pred, hit))
+
+    acc = f"%{100 * n_hit / n_done:.0f}" if n_done else "%–"
+    st.markdown(
+        f'<div class="summary-bar">'
+        f'<span class="sum-chip">⚽ {n_done} MAÇ TAMAMLANDI</span>'
+        f'<span class="sum-chip green">🎯 {n_hit} DOĞRU TAHMİN ({acc})</span>'
+        f'<span class="sum-chip red">🔴 {n_live} DEVAM EDİYOR</span>'
+        f'<span class="sum-chip">📅 {n_up} YAKLAŞIYOR</span></div>',
+        unsafe_allow_html=True)
+
+    # most recent date on top, then the future in chronological order
+    dates = sorted({e["date"] for e in schedule})
+    ordered = (sorted((d for d in dates if d <= today_iso), reverse=True)
+               + [d for d in dates if d > today_iso])
+
+    hits = []
+    for d in ordered:
+        st.markdown(f'<div class="date-head">📅 {tr_date(d)}</div>',
+                    unsafe_allow_html=True)
+        for e, rr, t1, t2, known, status, pred, hit in enriched:
+            if e["date"] == d:
+                _match_card(e, rr, t1, t2, known, status, pred, hit, predictor)
+                if hit:
+                    hits.append(e["id"])
 
     celebrated = st.session_state.setdefault("celebrated", set())
-    fresh = [mid for mid in correct_now if mid not in celebrated]
+    fresh = [m for m in hits if m not in celebrated]
     if fresh:
         celebrated.update(fresh)
         st.balloons()
-        st.toast("🎉 The model called it! Correct prediction! ⚽🏆")
+        st.toast("🎉 TAHMİN TUTTU! ⚽🏆")
+
+
+def _match_card(e, rr, t1, t2, known, status, pred, hit, predictor):
+    stage = e["group"] and f"Grup {e['group']}" or e["stage"]
+    meta = f"⏰ {e['time']} · 🏟️ {e['venue']} · 🎯 {stage}"
+    if not known:
+        st.markdown(f"""<div class="match-card">
+<div class="kickoff">{meta}</div>
+<div class="teams-line"><span>{t1}</span><span class="vs">VS</span><span>{t2}</span></div>
+<div class="mini">eşleşme henüz belli değil — braket sayfasına bak</div>
+</div>""", unsafe_allow_html=True)
+        return
+
+    f1, f2 = flag(t1), flag(t2)
+    if status == "done":
+        score = f"{rr['s1']}–{rr['s2']}"
+        if rr.get("pens"):
+            score += f" ({rr['pens'][0]}–{rr['pens'][1]} pen)"
+        verdict = ('<span class="verdict ok">TAHMİN TUTTU ✅</span>' if hit
+                   else '<span class="verdict bad">TAHMİN PATLADI ❌</span>')
+        label = f"{t1} {rr['s1']}-{rr['s2']} {t2}"
+        bits = []
+        for team in (t1, t2):
+            delta = momentum_delta(predictor, team, label)
+            if delta is not None:
+                arrow = "📈" if delta >= 0 else "📉"
+                bits.append(f"{arrow} {flag(team)} {team} {delta:+.1f}")
+        momline = (f'<div class="mini">Momentum: {" · ".join(bits)}</div>'
+                   if bits else "")
+        st.markdown(f"""<div class="match-card done">
+<div class="kickoff">{meta}</div>
+<div class="teams-line"><span>{f1} {t1}</span><span class="score-big">{score}</span><span>{t2} {f2}</span></div>
+<div class="mini">Model tahmini: {pred['score'][0]}-{pred['score'][1]} · {verdict}</div>
+{momline}
+</div>""", unsafe_allow_html=True)
+        return
+
+    icon1, icon2 = form_icon(predictor, t1), form_icon(predictor, t2)
+    badge = ('<span class="live-badge">● CANLI</span>'
+             if status == "live" else '')
+    cls = "match-card liveg" if status == "live" else "match-card"
+    bar = prob_bar(pred["p1"], pred["px"], pred["p2"],
+                   f"{f1} {TEAMS[t1].code}", f"{TEAMS[t2].code} {f2}")
+    st.markdown(f"""<div class="{cls}">
+<div class="kickoff">{badge}{meta}</div>
+<div class="teams-line"><span>{f1} {t1} {icon1}</span><span class="vs">VS</span><span>{icon2} {t2} {f2}</span></div>
+{bar}
+<div class="mini">Tahmini skor {pred['score'][0]}-{pred['score'][1]} · Beklenen gol {pred['xg1']:.2f}:{pred['xg2']:.2f} · Güven %{pred['confidence']:.0f}</div>
+</div>""", unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -551,7 +645,8 @@ def page_form(schedule, results, predictor):
             index=["start"] + [f"{e[0]}" for e in events])
         st.line_chart(chart)
         for d, label, delta, cum in events:
-            st.markdown(f"- {d} · {label} → momentum {delta:+.1f} (now {cum:+.1f})")
+            st.markdown(f"- {d} · {flagged_label(label)} → momentum "
+                        f"{delta:+.1f} (now {cum:+.1f})")
     else:
         st.caption("No tournament matches played yet — momentum builds once "
                    "real results come in.")
@@ -590,7 +685,8 @@ def sidebar_data_tools(schedule, results, predictor, projections):
         if not options:
             st.caption("No decidable fixtures awaiting a result.")
         else:
-            labels = [f"{e['date']} · {t1} v {t2} ({e['group'] and 'Grp ' + e['group'] or e['stage']})"
+            labels = [f"{e['date']} · {flag(t1)} {t1} v {t2} {flag(t2)} "
+                      f"({e['group'] and 'Grp ' + e['group'] or e['stage']})"
                       for e, t1, t2 in options]
             idx = st.selectbox("Match", range(len(options)),
                                format_func=lambda i: labels[i])
@@ -637,7 +733,7 @@ def main():
     with st.sidebar:
         live_updater()
     page = st.sidebar.radio("Pages", [
-        "📅 Today's Matches", "📊 Group Stage",
+        "📅 Maç Merkezi", "📊 Group Stage",
         "🏆 Bracket", "📈 Form Tracker"], label_visibility="collapsed")
 
     schedule, results, predictor, projections = get_state()
