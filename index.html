@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WC26 — Dünya Kupası 2026 Tahmin Merkezi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{
+  --bg:#F5F5F0; --navy:#0A1628; --red:#E8001D; --gold:#FFB800;
+  --green:#00A651; --paper:#FFFFFF; --grey:#8A8F98; --line:rgba(10,22,40,.1);
+  --shadow:12px 12px 0 rgba(10,22,40,.08);
+  --display:'Bebas Neue', 'Arial Narrow', sans-serif;
+  --body:'DM Sans', 'Segoe UI', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--navy);font-family:var(--body);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ───────────────────────── nav ───────────────────────── */
+nav{position:sticky;top:0;z-index:50;background:var(--paper);
+  border-bottom:3px solid var(--navy);display:flex;align-items:center;
+  gap:6px;padding:0 clamp(12px,4vw,48px);height:62px;overflow-x:auto;
+  scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.logo{font-family:var(--display);font-size:30px;background:var(--red);
+  color:#fff;padding:2px 14px;transform:skew(-8deg);margin-right:14px;
+  letter-spacing:1px;flex-shrink:0;box-shadow:4px 4px 0 var(--navy)}
+.logo span{color:var(--gold)}
+nav a{font-family:var(--display);font-size:21px;letter-spacing:1.5px;
+  color:var(--navy);text-decoration:none;padding:6px 13px;position:relative;
+  white-space:nowrap;transition:color .15s}
+nav a::after{content:"";position:absolute;left:13px;right:13px;bottom:2px;
+  height:4px;background:var(--red);transform:scaleX(0);transform-origin:left;
+  transition:transform .22s cubic-bezier(.2,.7,.2,1)}
+nav a:hover{color:var(--red)}
+nav a.active{color:var(--red)}
+nav a.active::after{transform:scaleX(1)}
+.nav-spacer{flex:1}
+.live-chip{font-family:var(--display);font-size:16px;letter-spacing:1px;
+  border:2px solid var(--navy);padding:3px 12px;white-space:nowrap;
+  background:var(--gold);box-shadow:3px 3px 0 var(--navy);cursor:pointer;
+  flex-shrink:0;transition:transform .12s}
+.live-chip:hover{transform:translate(-1px,-1px)}
+
+/* ───────────────────────── hero ───────────────────────── */
+.hero{position:relative;background:var(--navy);color:#fff;
+  padding:clamp(34px,6vw,68px) clamp(16px,5vw,56px) clamp(48px,7vw,86px);
+  clip-path:polygon(0 0,100% 0,100% 82%,0 100%);overflow:hidden}
+.hero::before{content:"";position:absolute;top:-40px;right:-90px;width:330px;
+  height:480px;background:var(--red);transform:rotate(18deg)}
+.hero::after{content:"";position:absolute;top:-40px;right:140px;width:54px;
+  height:480px;background:var(--gold);transform:rotate(18deg)}
+.hero h1{font-family:var(--display);font-size:clamp(46px,9vw,108px);
+  line-height:.92;letter-spacing:1px;position:relative;z-index:2;
+  text-transform:uppercase}
+.hero h1 .outline{color:transparent;-webkit-text-stroke:2px #fff}
+.hero h1 .red{color:var(--red);-webkit-text-stroke:0}
+.hero .sub{position:relative;z-index:2;margin-top:12px;display:flex;
+  flex-wrap:wrap;gap:10px;align-items:center}
+.chip{font-family:var(--display);font-size:17px;letter-spacing:1.2px;
+  padding:3px 14px;background:var(--gold);color:var(--navy)}
+.chip.green{background:var(--green);color:#fff}
+.chip.ghost{background:transparent;border:2px solid rgba(255,255,255,.5);color:#fff}
+
+main{max-width:1180px;margin:-30px auto 0;position:relative;z-index:3;
+  padding:0 clamp(14px,4vw,40px) 80px}
+section.page{display:none}
+section.page.on{display:block}
+
+/* ───────────────────────── cards & layout ───────────────────────── */
+.card{background:var(--paper);border-top:6px solid var(--navy);
+  box-shadow:var(--shadow);padding:clamp(16px,3vw,26px);margin-bottom:26px;
+  opacity:0;transform:translateY(26px)}
+.card.in{opacity:1;transform:none;
+  transition:opacity .55s cubic-bezier(.2,.7,.2,1),transform .55s cubic-bezier(.2,.7,.2,1)}
+.card.red{border-top-color:var(--red)}
+.card.gold{border-top-color:var(--gold)}
+.card.green{border-top-color:var(--green)}
+.grid{display:grid;gap:24px}
+.grid.g2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.grid.g3{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.grid .card{margin-bottom:0}
+h2.sec{font-family:var(--display);font-size:clamp(30px,5vw,46px);
+  letter-spacing:1px;margin:34px 0 18px;display:flex;align-items:center;gap:14px}
+h2.sec::after{content:"";flex:1;height:5px;background:var(--navy)}
+h2.sec em{font-style:normal;color:var(--red)}
+.meta{font-size:13px;font-weight:500;color:var(--grey);
+  text-transform:uppercase;letter-spacing:1.4px}
+
+/* ───────────────────────── match cards ───────────────────────── */
+.mhead{display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.stagechip{font-family:var(--display);font-size:15px;letter-spacing:1.4px;
+  background:var(--navy);color:#fff;padding:2px 12px}
+.teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  gap:10px;margin:6px 0 14px}
+.tname{font-family:var(--display);font-size:clamp(23px,3.4vw,34px);
+  letter-spacing:.8px;line-height:1}
+.tname small{display:block;font-family:var(--body);font-size:12px;
+  letter-spacing:1.6px;color:var(--grey);font-weight:700;margin-top:3px}
+.t-right{text-align:right}
+.vs{font-family:var(--display);font-size:clamp(34px,5vw,52px);
+  color:var(--red);transform:skew(-10deg);padding:0 10px;
+  text-shadow:3px 3px 0 rgba(10,22,40,.12)}
+.pbar{display:flex;height:17px;background:#E7E5DC;overflow:hidden;margin:7px 0 5px}
+.pbar div{height:100%;width:0;transition:width 1s cubic-bezier(.2,.7,.2,1)}
+.pbar .a{background:var(--navy)} .pbar .x{background:#C9C4B8} .pbar .b{background:var(--red)}
+.plabels{display:flex;justify-content:space-between;font-size:13px;font-weight:700}
+.plabels .mid{color:var(--grey)}
+.statline{display:flex;gap:10px;flex-wrap:wrap;margin-top:13px}
+.stat{border:2px solid var(--navy);padding:5px 13px;text-align:center}
+.stat b{font-family:var(--display);font-size:25px;letter-spacing:1px;display:block;line-height:1}
+.stat span{font-size:10px;letter-spacing:1.4px;font-weight:700;color:var(--grey);text-transform:uppercase}
+.resbanner{margin-top:13px;padding:9px 15px;font-weight:700;display:flex;
+  gap:12px;align-items:center;flex-wrap:wrap;font-size:15px}
+.resbanner.ok{background:#E7F6EE;border-left:6px solid var(--green)}
+.resbanner.bad{background:#FBEAEA;border-left:6px solid var(--red)}
+.resbanner .ft{font-family:var(--display);font-size:23px;letter-spacing:1px}
+
+/* ───────────────────────── buttons & forms ───────────────────────── */
+.btn{font-family:var(--display);font-size:clamp(20px,2.4vw,26px);
+  letter-spacing:2px;background:var(--red);color:#fff;border:none;
+  padding:10px 40px;cursor:pointer;box-shadow:6px 6px 0 var(--navy);
+  transition:transform .13s,box-shadow .13s,background .13s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:9px 9px 0 var(--navy);background:#c40019}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--navy)}
+.btn.navy{background:var(--navy)} .btn.navy:hover{background:#13243d}
+.btn.sm{font-size:17px;padding:6px 20px;box-shadow:4px 4px 0 var(--navy)}
+select,input[type=text],input[type=number]{font-family:var(--body);
+  font-weight:700;font-size:15px;padding:10px 12px;border:2.5px solid var(--navy);
+  background:#fff;color:var(--navy);outline:none;border-radius:0}
+select:focus,input:focus{border-color:var(--red)}
+input[type=number]{width:74px;text-align:center;
+  font-family:var(--display);font-size:24px}
+.formrow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.formrow label{display:flex;flex-direction:column;gap:5px;font-size:11px;
+  font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--grey)}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  font-weight:700;font-size:14px;user-select:none}
+.toggle input{display:none}
+.toggle .tk{width:46px;height:24px;background:#D9D5C9;position:relative;transition:background .2s}
+.toggle .tk::after{content:"";position:absolute;top:3px;left:3px;width:18px;
+  height:18px;background:var(--navy);transition:left .2s}
+.toggle input:checked+.tk{background:var(--gold)}
+.toggle input:checked+.tk::after{left:25px}
+.flash{padding:11px 16px;font-weight:700;margin:12px 0;display:none}
+.flash.ok{display:block;background:#E7F6EE;border-left:6px solid var(--green)}
+.flash.err{display:block;background:#FBEAEA;border-left:6px solid var(--red)}
+
+/* ───────────────────────── groups ───────────────────────── */
+.gcard{position:relative;overflow:hidden}
+.gcard .wm{position:absolute;right:-14px;top:-44px;font-family:var(--display);
+  font-size:190px;color:rgba(10,22,40,.055);line-height:1;pointer-events:none}
+.gtable{width:100%;border-collapse:collapse;font-size:14px;position:relative}
+.gtable th{font-family:var(--display);font-size:15px;letter-spacing:1.4px;
+  text-align:left;border-bottom:3px solid var(--navy);padding:5px 7px}
+.gtable td{padding:7px;border-bottom:1px solid var(--line);font-weight:500}
+.gtable td.pts{font-family:var(--display);font-size:19px}
+.gtable tr.q1{background:#E7F6EE;border-left:5px solid var(--green)}
+.gtable tr.q3{background:#FFF6E0;border-left:5px solid var(--gold)}
+.gtable tr.q4{background:#FBEAEA;border-left:5px solid var(--red);opacity:.72}
+.legend{font-size:11.5px;color:var(--grey);font-weight:600;margin-top:9px;
+  display:flex;gap:13px;flex-wrap:wrap}
+.dot{display:inline-block;width:10px;height:10px;margin-right:4px}
+
+/* ───────────────────────── bracket ───────────────────────── */
+.bwrap{overflow-x:auto;padding-bottom:16px}
+.bcols{display:flex;gap:34px;min-width:1140px;align-items:stretch}
+.bcol{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:14px}
+.bcol h3{font-family:var(--display);font-size:21px;letter-spacing:1.6px;
+  border-bottom:4px solid var(--red);padding-bottom:3px}
+.bmatch{background:#fff;border:2.5px solid var(--navy);position:relative;
+  box-shadow:6px 6px 0 rgba(10,22,40,.08)}
+.bmatch::after{content:"";position:absolute;right:-22px;top:50%;width:22px;
+  height:3px;background:var(--navy)}
+.bcol:last-child .bmatch::after{display:none}
+.bmeta{font-size:10px;letter-spacing:1.2px;font-weight:700;color:var(--grey);
+  padding:4px 9px;border-bottom:1px solid var(--line);display:flex;
+  justify-content:space-between;gap:6px}
+.bslot{padding:6px 9px;font-weight:700;font-size:14px;display:flex;
+  justify-content:space-between;gap:7px;align-items:center}
+.bslot+.bslot{border-top:1px solid var(--line)}
+.bslot.conf{color:var(--navy)}
+.bslot.proj{color:var(--grey);font-style:italic;font-weight:500}
+.bslot.win{background:var(--navy);color:#fff}
+.bslot .sc{font-family:var(--display);font-size:18px}
+.bslot .pr{font-size:10.5px;background:#EEEBE0;padding:1px 6px;font-style:normal}
+.champ{background:var(--gold);border:3px solid var(--navy);text-align:center;
+  padding:18px 10px;box-shadow:8px 8px 0 rgba(10,22,40,.15)}
+.champ .lab{font-family:var(--display);letter-spacing:2.5px;font-size:17px}
+.champ .who{font-family:var(--display);font-size:33px;line-height:1.05;margin-top:4px}
+
+/* ───────────────────────── leaderboard ───────────────────────── */
+.podium{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+  align-items:end;margin-bottom:26px}
+.pod{background:#fff;text-align:center;padding:20px 10px 16px;
+  box-shadow:var(--shadow);border-top:8px solid}
+.pod .rk{font-family:var(--display);font-size:60px;line-height:.9}
+.pod .nm{font-weight:700;font-size:16px;margin:6px 0 2px;word-break:break-word}
+.pod .pt{font-family:var(--display);font-size:34px;color:var(--red)}
+.pod .pt small{font-size:16px;color:var(--grey)}
+.pod.p1{border-color:var(--gold);padding-top:34px}
+.pod.p2{border-color:#A7A9AC} .pod.p3{border-color:#B0703C}
+.ltable{width:100%;border-collapse:collapse;font-size:14.5px}
+.ltable th{font-family:var(--display);letter-spacing:1.4px;font-size:15px;
+  text-align:left;border-bottom:3px solid var(--navy);padding:6px}
+.ltable td{padding:8px 6px;border-bottom:1px solid var(--line);font-weight:600}
+
+/* ───────────────────────── analysis ───────────────────────── */
+.bignum{font-family:var(--display);font-size:clamp(80px,15vw,150px);
+  line-height:.9;color:var(--red);text-shadow:5px 5px 0 rgba(10,22,40,.1)}
+.bigwrap{display:flex;gap:30px;align-items:center;flex-wrap:wrap}
+.sbar{margin:10px 0}
+.sbar .lab{display:flex;justify-content:space-between;font-weight:700;
+  font-size:13.5px;margin-bottom:4px}
+.sbar .tr{height:21px;background:#E7E5DC}
+.sbar .fl{height:100%;width:0;background:var(--green);
+  transition:width 1s cubic-bezier(.2,.7,.2,1)}
+.htable{width:100%;border-collapse:collapse;font-size:13.5px}
+.htable th{font-family:var(--display);font-size:14.5px;letter-spacing:1.2px;
+  text-align:left;border-bottom:3px solid var(--navy);padding:6px}
+.htable td{padding:7px 6px;border-bottom:1px solid var(--line);font-weight:500}
+.htable .sco{font-family:var(--display);font-size:17px}
+.empty{padding:36px;text-align:center}
+.empty .big{font-family:var(--display);font-size:clamp(30px,5vw,46px);letter-spacing:1px}
+.empty p{color:var(--grey);font-weight:500;margin-top:8px}
+
+footer{background:var(--navy);color:#fff;margin-top:30px;
+  clip-path:polygon(0 22%,100% 0,100% 100%,0 100%);
+  padding:60px clamp(16px,5vw,56px) 28px;text-align:center}
+footer .f1{font-family:var(--display);font-size:clamp(26px,4vw,40px);letter-spacing:2px}
+footer .f1 em{color:var(--gold);font-style:normal}
+footer p{color:rgba(255,255,255,.55);font-size:12.5px;margin-top:8px;font-weight:500}
+
+@media (max-width:640px){
+  .teams{grid-template-columns:1fr}
+  .t-right{text-align:left}
+  .vs{display:none}
+  .podium{grid-template-columns:1fr;align-items:stretch}
+  .hero::after{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="logo">WC<span>26</span></div>
+  <a href="#/bugun" data-r="bugun">BUGÜN</a>
+  <a href="#/tahmin" data-r="tahmin">TAHMİN MAKİNESİ</a>
+  <a href="#/gruplar" data-r="gruplar">GRUPLAR</a>
+  <a href="#/braket" data-r="braket">BRAKET</a>
+  <a href="#/yarisma" data-r="yarisma">YARIŞMA</a>
+  <a href="#/analiz" data-r="analiz">ANALİZ</a>
+  <div class="nav-spacer"></div>
+  <div class="live-chip" id="refreshBtn" title="openfootball canlı verisini çek">⟳ CANLI VERİ</div>
+</nav>
+
+<header class="hero">
+  <h1><span class="outline">DÜNYA KUPASI</span><br>20<span class="red">26</span></h1>
+  <div class="sub">
+    <span class="chip" id="dayChip">…</span>
+    <span class="chip green">ABD · MEKSİKA · KANADA</span>
+    <span class="chip ghost">48 TAKIM · 104 MAÇ · TEK KUPA</span>
+  </div>
+</header>
+
+<main>
+  <section class="page" id="pg-bugun"></section>
+  <section class="page" id="pg-tahmin"></section>
+  <section class="page" id="pg-gruplar"></section>
+  <section class="page" id="pg-braket"></section>
+  <section class="page" id="pg-yarisma"></section>
+  <section class="page" id="pg-analiz"></section>
+</main>
+
+<footer>
+  <div class="f1">HER MAÇ BİR <em>SAVAŞ</em>. HER TAHMİN BİR <em>İDDİA</em>.</div>
+  <p>⚽ veri & 🤖 yapay zekâ tahminleri ile · FIFA sıralaması Haziran 2026 · openfootball canlı veri</p>
+</footer>
+
+<script>
+/* ════════════════════════ helpers ════════════════════════ */
+const $ = s => document.querySelector(s);
+const cache = {};
+async function api(path, opts){
+  if(!opts && cache[path]) return cache[path];
+  const r = await fetch('/api'+path, opts);
+  const j = await r.json();
+  if(!r.ok) throw new Error(j.error || 'sunucu hatası');
+  if(!opts) cache[path] = j;
+  return j;
+}
+function bust(){ for(const k in cache) delete cache[k]; }
+const esc = s => String(s).replace(/[&<>"]/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct = p => Math.round(p*100);
+
+function reveal(scope){
+  const els = scope.querySelectorAll('.card');
+  els.forEach((el,i)=>{ el.style.transitionDelay = (Math.min(i,8)*70)+'ms'; });
+  const io = new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:.08});
+  els.forEach(el=>io.observe(el));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    scope.querySelectorAll('[data-w]').forEach(el=>{ el.style.width = el.dataset.w; });
+  }));
+}
+function countUp(el, target, suffix=''){
+  const t0 = performance.now(), dur = 950;
+  function tick(t){
+    const k = Math.min(1,(t-t0)/dur), e = 1-Math.pow(1-k,3);
+    el.textContent = (target*e).toFixed(target%1?1:0)+suffix;
+    if(k<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+function probBar(p){
+  return `<div class="pbar">
+      <div class="a" data-w="${(p.p1*100).toFixed(1)}%"></div>
+      <div class="x" data-w="${(p.px*100).toFixed(1)}%"></div>
+      <div class="b" data-w="${(p.p2*100).toFixed(1)}%"></div></div>`;
+}
+function probLabels(p,c1,c2){
+  return `<div class="plabels"><span>${esc(c1)} %${pct(p.p1)}</span>
+    <span class="mid">BERABERE %${pct(p.px)}</span>
+    <span>${esc(c2)} %${pct(p.p2)}</span></div>`;
+}
+
+/* ════════════════════════ BUGÜN ════════════════════════ */
+async function renderToday(root, qdate){
+  const d = await api('/matches/today'+(qdate?`?date=${qdate}`:''));
+  $('#dayChip').textContent = d.day_label;
+  const opts = d.dates.map(x=>`<option ${x===d.date?'selected':''}>${x}</option>`).join('');
+  let html = `<h2 class="sec">BUGÜNÜN <em>MAÇLARI</em></h2>
+    <div class="formrow" style="margin-bottom:22px">
+      <label>MAÇ GÜNÜ<select id="daySel">${opts}</select></label>
+      <span class="meta">${d.matches.length} maç</span>
+    </div>`;
+  if(!d.matches.length) html += `<div class="card in"><div class="empty">
+      <div class="big">BU TARİHTE MAÇ YOK</div><p>Başka bir gün seç — grup aşaması 11–27 Haziran.</p></div></div>`;
+  html += d.matches.map(m=>{
+    const head = `<div class="mhead">
+        <span class="stagechip">${esc(m.stage)}${m.group?' · GRUP '+m.group:''}</span>
+        <span class="meta">⏱ ${esc(m.time)} · ${esc(m.venue)}</span></div>`;
+    if(!m.confirmed) return `<div class="card"><div>${head}
+        <div class="teams"><div class="tname">${esc(m.hint1)}</div>
+        <div class="vs">VS</div><div class="tname t-right">${esc(m.hint2)}</div></div>
+        <p class="meta">eşleşme henüz kesinleşmedi</p></div></div>`;
+    const p = m.prediction;
+    let res = '';
+    if(m.result){
+      const sc = `${m.result.s1}–${m.result.s2}` +
+        (m.result.pens?` (pen ${m.result.pens[0]}–${m.result.pens[1]})`:'');
+      res = `<div class="resbanner ${m.model_correct?'ok':'bad'}">
+          <span class="ft">MS ${sc}</span>
+          <span>${m.model_correct?'✅ model sonucu bildi':'❌ model yanıldı'}
+          — tahmin ${p.score[0]}–${p.score[1]}</span></div>`;
+    }
+    return `<div class="card red"><div>${head}
+      <div class="teams">
+        <div class="tname">${m.team1.flag} ${esc(m.team1.name)}<small>FIFA #${m.team1.rank}</small></div>
+        <div class="vs">VS</div>
+        <div class="tname t-right">${esc(m.team2.name)} ${m.team2.flag}<small>FIFA #${m.team2.rank}</small></div>
+      </div>
+      ${probBar(p)} ${probLabels(p,m.team1.code,m.team2.code)}
+      <div class="statline">
+        <div class="stat"><b>${p.score[0]}–${p.score[1]}</b><span>tahmini skor</span></div>
+        <div class="stat"><b>${p.xg1} : ${p.xg2}</b><span>beklenen gol</span></div>
+        <div class="stat"><b data-count="${p.confidence}" data-suf="%">0</b><span>güven</span></div>
+        ${p.adv1!==undefined?`<div class="stat"><b>%${pct(p.adv1)}</b><span>${m.team1.code} tur atlar</span></div>`:''}
+      </div>
+      ${res}
+      ${!m.result?`<details style="margin-top:12px"><summary class="meta" style="cursor:pointer">SONUÇ GİR (gerçek skor)</summary>
+        <div class="formrow" style="margin-top:10px">
+          <input type="number" min="0" max="15" value="0" id="rs1-${esc(m.id)}">
+          <input type="number" min="0" max="15" value="0" id="rs2-${esc(m.id)}">
+          <button class="btn sm navy" onclick="saveResult('${esc(m.id)}')">KAYDET</button>
+        </div></details>`:''}
+    </div></div>`;
+  }).join('');
+  html += `<div class="flash" id="todayFlash"></div>`;
+  root.innerHTML = html;
+  $('#daySel').onchange = e => renderToday(root, e.target.value);
+  reveal(root);
+  root.querySelectorAll('[data-count]').forEach(el=>countUp(el,+el.dataset.count,el.dataset.suf||''));
+}
+async function saveResult(id){
+  const s1 = +$(`[id="rs1-${id}"]`).value, s2 = +$(`[id="rs2-${id}"]`).value;
+  const f = $('#todayFlash');
+  try{
+    let body = {match_id:id, s1, s2};
+    if(id.startsWith('K') && s1===s2){
+      const p1 = prompt('Penaltılar — ev sahibi kaç attı?','5'),
+            p2 = prompt('Penaltılar — deplasman kaç attı?','4');
+      body.pens = [+p1, +p2];
+    }
+    await api('/results',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    bust(); f.className='flash ok'; f.textContent='✅ Sonuç kaydedildi — tüm tahminler güncellendi.';
+    setTimeout(()=>route(), 700);
+  }catch(e){ f.className='flash err'; f.textContent='❌ '+e.message; }
+}
+
+/* ════════════════════════ TAHMİN MAKİNESİ ════════════════════════ */
+async function renderPredictor(root){
+  const teams = await api('/teams');
+  const opt = sel => teams.map(t=>`<option ${t.name===sel?'selected':''} value="${esc(t.name)}">${t.flag} ${esc(t.name)}</option>`).join('');
+  root.innerHTML = `<h2 class="sec">TAHMİN <em>MAKİNESİ</em></h2>
+    <div class="card gold in"><div class="formrow">
+      <label>TAKIM 1<select id="t1">${opt('Türkiye')}</select></label>
+      <label>TAKIM 2<select id="t2">${opt('Brazil')}</select></label>
+      <label class="toggle" style="margin-bottom:8px"><input type="checkbox" id="ko"><span class="tk"></span> ELEME MAÇI</label>
+      <button class="btn" id="goBtn">TAHMİN ET</button>
+    </div><div class="flash" id="pFlash"></div></div>
+    <div id="pOut"></div>`;
+  $('#goBtn').onclick = async ()=>{
+    const t1=$('#t1').value, t2=$('#t2').value, ko=$('#ko').checked?1:0;
+    const f=$('#pFlash'); f.className='flash';
+    try{
+      const r = await api(`/predict?t1=${encodeURIComponent(t1)}&t2=${encodeURIComponent(t2)}&knockout=${ko}`,{method:'GET'});
+      const p=r.prediction, a=r.team1, b=r.team2;
+      const ti = n => { const t=teams.find(x=>x.name===n)||{}; let s='';
+        if(t.form) s+=`<div style="margin-top:6px"><b>Form:</b> <code>${t.form}</code> — ${esc(t.form_note||'')}</div>`;
+        (t.injuries||[]).forEach(i=>{ s+=`<div>🚑 <b>${esc(i.player)}</b> — ${esc(i.status)}</div>`; });
+        return s||'<div class="meta">eksik/sakat bildirimi yok</div>'; };
+      $('#pOut').innerHTML = `<div class="card red">
+        <div class="teams">
+          <div class="tname">${a.flag} ${esc(a.name)}<small>FIFA #${a.rank}</small></div>
+          <div class="vs">VS</div>
+          <div class="tname t-right">${esc(b.name)} ${b.flag}<small>FIFA #${b.rank}</small></div>
+        </div>
+        ${probBar(p)} ${probLabels(p,a.code,b.code)}
+        <div class="bigwrap" style="margin-top:18px">
+          <div><div class="bignum">${p.score[0]}–${p.score[1]}</div>
+          <div class="meta">EN OLASI SKOR (%${Math.round(p.confidence)} güven)</div></div>
+          <div style="flex:1;min-width:240px">
+            <div class="statline">
+              <div class="stat"><b>%${pct(p.p1)}</b><span>${a.code} kazanır</span></div>
+              <div class="stat"><b>%${pct(p.px)}</b><span>beraberlik</span></div>
+              <div class="stat"><b>%${pct(p.p2)}</b><span>${b.code} kazanır</span></div>
+              ${p.adv1!==undefined?`<div class="stat"><b>%${pct(p.adv1)}</b><span>${a.code} tur atlar</span></div>`:''}
+            </div>
+            <div style="margin-top:14px;font-size:14px">
+              <div style="font-family:var(--display);font-size:18px;letter-spacing:1.4px">KİLİT FAKTÖRLER</div>
+              ${p.factors.map(x=>`<div>· ${esc(x)}</div>`).join('')}
+            </div>
+          </div>
+        </div></div>
+        <div class="grid g2">
+          <div class="card"><div><b>${a.flag} ${esc(a.name)}</b>${ti(a.name)}</div></div>
+          <div class="card"><div><b>${b.flag} ${esc(b.name)}</b>${ti(b.name)}</div></div>
+        </div>`;
+      reveal($('#pOut'));
+    }catch(e){ f.className='flash err'; f.textContent='❌ '+e.message; }
+  };
+  $('#goBtn').click();
+}
+
+/* ════════════════════════ GRUPLAR ════════════════════════ */
+async function renderGroups(root){
+  const gs = await api('/groups');
+  root.innerHTML = `<h2 class="sec">GRUPLAR <em>· CANLI PUAN DURUMU</em></h2>
+    <div class="grid g3">` + gs.map(g=>{
+      const rows = g.rows.map((r,i)=>{
+        const cls = i<2?'q1':(i===2?'q3':'q4');
+        return `<tr class="${cls}"><td>${i+1}</td>
+          <td>${r.flag} <b>${esc(r.code)}</b></td>
+          <td>${r.P}</td><td>${r.GD>0?'+':''}${r.GD}</td>
+          <td class="pts">${r.Pts}</td><td>%${pct(r.top2_prob)}</td></tr>`;
+      }).join('');
+      return `<div class="card gcard"><div class="wm">${g.letter}</div><div>
+        <div style="font-family:var(--display);font-size:30px;letter-spacing:2px">GRUP ${g.letter} <span style="color:var(--red)">⚽</span></div>
+        <table class="gtable"><tr><th>#</th><th>TAKIM</th><th>O</th><th>AV</th><th>P</th><th>İLK 2</th></tr>${rows}</table>
+        <div class="legend">
+          <span><span class="dot" style="background:var(--green)"></span>tur</span>
+          <span><span class="dot" style="background:var(--gold)"></span>en iyi 3.'lük şansı</span>
+          <span><span class="dot" style="background:var(--red)"></span>eleniyor</span>
+          <span style="margin-left:auto">${g.remaining.length} maç kaldı</span>
+        </div></div></div>`;
+    }).join('') + `</div>`;
+  reveal(root);
+}
+
+/* ════════════════════════ BRAKET ════════════════════════ */
+async function renderBracket(root){
+  const b = await api('/bracket');
+  const slot = s=>{
+    if(!s.name) return `<div class="bslot proj"><span>${esc(s.label)}</span></div>`;
+    const cls = s.confirmed?'conf':'proj';
+    const pr = s.prob!==undefined?`<span class="pr">%${pct(s.prob)}</span>`:'';
+    return `<div class="bslot ${cls}"><span>${s.flag} ${esc(s.code)}</span>${pr}</div>`;
+  };
+  const col = st=>{
+    if(!st.matches.length) return '';
+    return `<div class="bcol"><h3>${esc(st.name_tr.toUpperCase())}</h3>` + st.matches.map(m=>{
+      let s1=slot(m.slot1), s2=slot(m.slot2);
+      if(m.result && m.winner){
+        const mark = (sl,sc)=> sl.replace('class="bslot conf"',
+          m.winner=== (sc===1?m.slot1.name:m.slot2.name) ? 'class="bslot win"':'class="bslot conf"');
+        s1 = mark(s1,1); s2 = mark(s2,2);
+      }
+      const sc = m.result?`<span class="sc">${m.result.s1}–${m.result.s2}${m.result.pens?' p':''}</span>`:'';
+      return `<div class="bmatch"><div class="bmeta"><span>M${m.num} · ${m.date}</span>${sc}</div>${s1}${s2}</div>`;
+    }).join('') + `</div>`;
+  };
+  const stages = b.stages.filter(s=>!['Third place','Final'].includes(s.name));
+  const fin = b.stages.find(s=>s.name==='Final');
+  const finM = fin.matches[0];
+  root.innerHTML = `<h2 class="sec">TURNUVA <em>BRAKETİ</em></h2>
+    <p class="meta" style="margin-bottom:16px">lacivert = kesinleşti · gri/italik = model projeksiyonu (slot olasılığı) · projeksiyon asla bir turdan öteye zincirlenmez</p>
+    <div class="card in"><div class="bwrap"><div class="bcols">
+      ${stages.map(col).join('')}
+      <div class="bcol"><h3>FİNAL · 19 TEM</h3>
+        <div class="bmatch"><div class="bmeta"><span>M104 · ${finM.date}</span>
+          ${finM.result?`<span class="sc">${finM.result.s1}–${finM.result.s2}</span>`:''}</div>
+          ${slot(finM.slot1)}${slot(finM.slot2)}</div>
+        <div class="champ"><div class="lab">🏆 ŞAMPİYON</div>
+          <div class="who">${b.champion?b.champion.flag+' '+esc(b.champion.name.toUpperCase()):'?'}</div>
+          ${b.champion?'':'<div class="meta">19 Temmuz · MetLife Stadium</div>'}</div>
+      </div>
+    </div></div></div>`;
+  reveal(root);
+}
+
+/* ════════════════════════ YARIŞMA ════════════════════════ */
+async function renderCompetition(root){
+  const d = await api('/predictions');
+  const lb = d.leaderboard;
+  const podium = lb.slice(0,3);
+  const order = [1,0,2];
+  const podHtml = lb.length ? `<div class="podium">` + order.map(i=>{
+    const p = podium[i]; if(!p) return '<div></div>';
+    const med = ['🥇','🥈','🥉'][i];
+    return `<div class="pod p${i+1} card in"><div class="rk">${med}</div>
+      <div class="nm">${esc(p.name)}</div>
+      <div class="pt"><span data-count="${p.points}">0</span><small> PUAN</small></div>
+      <div class="meta">${p.exact} tam skor · ${p.outcome} doğru sonuç</div></div>`;
+  }).join('') + `</div>` : '';
+  const rows = lb.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}</td>
+      <td><b>${p.points}</b></td><td>${p.exact}</td><td>${p.outcome}</td><td>${p.picks}</td></tr>`).join('');
+  const opts = d.open_matches.map(m=>`<option value="${esc(m.id)}">${m.date} · ${esc(m.label)}</option>`).join('');
+  root.innerHTML = `<h2 class="sec">TAHMİN <em>YARIŞMASI</em></h2>
+    <div class="card green in"><div>
+      <div style="font-family:var(--display);font-size:23px;letter-spacing:1.4px">SKORUNU YAZ, ARKADAŞLARINI EZ.</div>
+      <p class="meta" style="margin:4px 0 14px">tam skor ${d.scoring.exact} puan · doğru sonuç ${d.scoring.outcome} puan</p>
+      <div class="formrow">
+        <label>İSMİN<input type="text" id="plName" maxlength="24" placeholder="rumuz"></label>
+        <label>MAÇ<select id="plMatch">${opts}</select></label>
+        <label>SKOR<div style="display:flex;gap:6px">
+          <input type="number" id="plS1" min="0" max="15" value="1">
+          <input type="number" id="plS2" min="0" max="15" value="1"></div></label>
+        <button class="btn" id="plBtn">KAYDET</button>
+      </div><div class="flash" id="plFlash"></div></div></div>
+    ${podHtml}
+    <div class="card in"><div>${lb.length?`<table class="ltable">
+      <tr><th>#</th><th>OYUNCU</th><th>PUAN</th><th>TAM SKOR</th><th>SONUÇ</th><th>TAHMİN</th></tr>${rows}</table>`
+      :`<div class="empty"><div class="big">HENÜZ KİMSE YOK</div><p>İlk tahmini sen yap, zirveye otur. 🏔️</p></div>`}</div></div>`;
+  root.querySelectorAll('[data-count]').forEach(el=>countUp(el,+el.dataset.count));
+  reveal(root);
+  $('#plBtn').onclick = async ()=>{
+    const f=$('#plFlash');
+    try{
+      await api('/predictions',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({player:$('#plName').value,match_id:$('#plMatch').value,
+                             s1:$('#plS1').value,s2:$('#plS2').value})});
+      bust(); f.className='flash ok'; f.textContent='✅ Tahmin kaydedildi. Maç bitince puanlar işlenir.';
+      setTimeout(()=>route(),800);
+    }catch(e){ f.className='flash err'; f.textContent='❌ '+e.message; }
+  };
+}
+
+/* ════════════════════════ ANALİZ ════════════════════════ */
+async function renderAnalysis(root){
+  const a = await api('/analysis');
+  if(!a.total){
+    root.innerHTML = `<h2 class="sec">MODEL <em>ANALİZİ</em></h2>
+      <div class="card in"><div class="empty"><div class="big">HENÜZ OYNANMIŞ MAÇ YOK</div>
+      <p>İlk düdükle birlikte model karne almaya başlar. Sonuç girildikçe isabet oranı burada.</p></div></div>`;
+    return reveal(root);
+  }
+  const bars = a.by_stage.map(s=>{
+    const acc = s.total? s.correct/s.total*100 : 0;
+    return `<div class="sbar"><div class="lab"><span>${esc(s.stage)}</span>
+      <span>${s.correct}/${s.total}</span></div>
+      <div class="tr"><div class="fl" data-w="${acc.toFixed(0)}%"></div></div></div>`;
+  }).join('');
+  const rows = a.history.map(h=>{
+    const sc = `${h.actual[0]}–${h.actual[1]}` + (h.pens?' p':'');
+    return `<tr><td>${h.date}</td>
+      <td>${h.team1.flag} ${esc(h.team1.code)} – ${esc(h.team2.code)} ${h.team2.flag}</td>
+      <td class="sco">${h.predicted[0]}–${h.predicted[1]}</td>
+      <td class="sco">${sc}</td>
+      <td>${h.correct?'✅':'❌'}${h.exact?' 🎯':''}</td></tr>`;
+  }).join('');
+  root.innerHTML = `<h2 class="sec">MODEL <em>ANALİZİ</em></h2>
+    <div class="card red in"><div class="bigwrap">
+      <div><div class="bignum"><span id="accNum">0</span>%</div>
+        <div class="meta">SONUÇ İSABET ORANI</div></div>
+      <div class="statline">
+        <div class="stat"><b data-count="${a.total}">0</b><span>oynanan maç</span></div>
+        <div class="stat"><b data-count="${a.correct}">0</b><span>doğru sonuç</span></div>
+        <div class="stat"><b data-count="${a.exact}">0</b><span>tam skor 🎯</span></div>
+      </div></div></div>
+    <div class="grid g2">
+      <div class="card gold"><div>
+        <div style="font-family:var(--display);font-size:22px;letter-spacing:1.4px;margin-bottom:6px">TUR BAZINDA İSABET</div>${bars}</div></div>
+      <div class="card"><div>
+        <div style="font-family:var(--display);font-size:22px;letter-spacing:1.4px;margin-bottom:6px">MAÇ GEÇMİŞİ</div>
+        <div style="max-height:420px;overflow-y:auto"><table class="htable">
+        <tr><th>TARİH</th><th>MAÇ</th><th>TAHMİN</th><th>GERÇEK</th><th></th></tr>${rows}</table></div></div></div>
+    </div>`;
+  reveal(root);
+  countUp($('#accNum'), a.accuracy);
+  root.querySelectorAll('[data-count]').forEach(el=>countUp(el,+el.dataset.count));
+}
+
+/* ════════════════════════ router ════════════════════════ */
+const routes = {bugun:renderToday, tahmin:renderPredictor, gruplar:renderGroups,
+                braket:renderBracket, yarisma:renderCompetition, analiz:renderAnalysis};
+async function route(){
+  const r = (location.hash.replace('#/','')||'bugun').split('?')[0];
+  const name = routes[r]?r:'bugun';
+  document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active',a.dataset.r===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  const pg = $('#pg-'+name);
+  pg.classList.add('on');
+  pg.innerHTML = `<div class="empty" style="padding:60px"><div class="big">YÜKLENİYOR…</div></div>`;
+  try{ await routes[name](pg); }
+  catch(e){ pg.innerHTML = `<div class="card red in"><div class="empty">
+    <div class="big">BAĞLANTI HATASI</div><p>${esc(e.message)} — sunucu çalışıyor mu? <code>python app.py</code></p></div></div>`; }
+}
+window.addEventListener('hashchange', route);
+$('#refreshBtn').onclick = async ()=>{
+  $('#refreshBtn').textContent = '⟳ ÇEKİLİYOR…';
+  try{ await api('/refresh',{method:'POST'}); bust(); await route();
+       $('#refreshBtn').textContent = '✓ GÜNCEL'; }
+  catch(e){ $('#refreshBtn').textContent = '✗ ÇEVRİMDIŞI'; }
+  setTimeout(()=>$('#refreshBtn').textContent='⟳ CANLI VERİ', 2500);
+};
+route();
+</script>
+</body>
+</html>

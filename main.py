@@ -42,86 +42,147 @@ def flag(name):
 
 st.markdown("""
 <style>
-/* ⚽ World Cup Festival theme — dark pitch, gold trophy, floodlight green */
-html, body, [data-testid="stAppViewContainer"] {background: #0a0e14;}
+/* ⚽ Athletic campaign theme — off-white field, navy ink, electric red */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap');
+
+:root {
+  --wc-bg: #F5F5F0; --wc-navy: #0A1628; --wc-red: #E8001D;
+  --wc-gold: #FFB800; --wc-green: #00A651;
+  --wc-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
+  --wc-shadow: 8px 8px 0 rgba(10,22,40,.08);
+}
+html, body, [data-testid="stAppViewContainer"] {background: var(--wc-bg);}
+body, p, span, div {font-family: 'DM Sans', 'Segoe UI', sans-serif;}
 [data-testid="stHeader"] {background: rgba(0,0,0,0);}
-[data-testid="stSidebar"] {background: #0d1117;
-                           border-right: 2px solid rgba(255,215,0,.55);}
-h1, h2, h3 {font-weight: 900 !important; letter-spacing: .4px;}
+[data-testid="stSidebar"] {background: #FFFFFF;
+                           border-right: 3px solid var(--wc-navy);}
+h1, h2, h3 {font-family: var(--wc-display) !important;
+            font-weight: 400 !important; letter-spacing: 1.5px;
+            color: var(--wc-navy) !important; text-transform: uppercase;}
+[data-testid="stSidebar"] h1 {color: var(--wc-red) !important;}
 
-.wc-title {font-size: 44px; font-weight: 900; line-height: 1.1;
-           background: linear-gradient(90deg, #FFD700, #fff3b0 45%, #FFD700);
-           -webkit-background-clip: text; background-clip: text;
-           color: transparent; text-shadow: 0 0 32px rgba(255,215,0,.25);}
-.wc-sub {color: #00FF87; font-weight: 700; font-size: 15px;
-         margin: 2px 0 20px 2px; letter-spacing: .5px;}
+/* hero banner */
+.wc-hero {position: relative; background: var(--wc-navy); overflow: hidden;
+          padding: 26px 30px 38px; margin-bottom: 22px;
+          clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%);}
+.wc-hero::before {content: ""; position: absolute; top: -50px; right: -70px;
+                  width: 210px; height: 380px; background: var(--wc-red);
+                  transform: rotate(18deg);}
+.wc-hero::after {content: ""; position: absolute; top: -50px; right: 84px;
+                 width: 34px; height: 380px; background: var(--wc-gold);
+                 transform: rotate(18deg);}
+.wc-title {position: relative; z-index: 2; font-family: var(--wc-display);
+           font-size: clamp(34px, 6vw, 58px); line-height: .95;
+           letter-spacing: 2px; color: #fff;}
+.wc-title .ol {color: transparent; -webkit-text-stroke: 2px #fff;}
+.wc-title .rd {color: var(--wc-red); -webkit-text-stroke: 0;}
+.wc-sub {position: relative; z-index: 2; font-family: var(--wc-display);
+         color: var(--wc-gold); font-size: 16px; letter-spacing: 2px;
+         margin-top: 8px;}
 
-.match-card {background: #11161f; border: 1px solid rgba(255,215,0,.45);
-             border-radius: 14px; padding: 14px 18px; margin-bottom: 12px;
-             transition: box-shadow .2s, transform .2s;}
-.match-card:hover {box-shadow: 0 0 20px rgba(255,215,0,.35);
-                   transform: translateY(-1px);}
+/* match cards */
+.match-card {background: #FFFFFF; border: 1px solid rgba(10,22,40,.12);
+             border-top: 6px solid var(--wc-red); border-radius: 2px;
+             padding: 16px 18px; margin-bottom: 14px;
+             box-shadow: var(--wc-shadow);
+             transition: transform .15s, box-shadow .15s;}
+.match-card:hover {transform: translate(-2px,-2px);
+                   box-shadow: 11px 11px 0 rgba(10,22,40,.12);}
 .teams-line {display: flex; justify-content: space-between;
              align-items: center; gap: 8px; flex-wrap: wrap;
-             font-size: 19px; font-weight: 800; color: #fff;}
-.vs {color: #ff3b3b; font-weight: 900; font-size: 22px;
-     text-shadow: 0 0 12px rgba(255,59,59,.65);}
-.kickoff {color: #FFD700; font-size: 13px; font-weight: 700;
-          margin-bottom: 7px; letter-spacing: .3px;}
-.kick {color: #9aa4b2; font-size: 13px;}
+             font-family: var(--wc-display); font-size: 24px;
+             letter-spacing: 1px; color: var(--wc-navy);}
+.vs {color: var(--wc-red); font-family: var(--wc-display); font-size: 30px;
+     transform: skew(-10deg); display: inline-block;
+     text-shadow: 2px 2px 0 rgba(10,22,40,.12);}
+.kickoff {color: var(--wc-red); font-size: 12.5px; font-weight: 700;
+          margin-bottom: 8px; letter-spacing: 1.4px;
+          text-transform: uppercase;}
+.kick {color: #6E7681; font-size: 13px;}
 
-.prob-bar {display: flex; height: 28px; border-radius: 8px; overflow: hidden;
+.prob-bar {display: flex; height: 26px; border-radius: 0; overflow: hidden;
            font-size: 13px; font-weight: 700; margin: 8px 0;
-           border: 1px solid rgba(255,255,255,.15);}
+           border: 1.5px solid rgba(10,22,40,.2);}
 .prob-bar div {display:flex; align-items:center; justify-content:center;
                white-space:nowrap; overflow:hidden;}
 
-.stButton > button {background: #FFD700 !important; color: #0a0a0a !important;
-                    font-weight: 800 !important; border: none !important;
-                    border-radius: 999px !important;}
-.stButton > button:hover {box-shadow: 0 0 16px rgba(255,215,0,.75);}
+/* buttons: red slab, hard navy shadow, sharp corners */
+.stButton > button {background: var(--wc-red) !important;
+                    color: #fff !important;
+                    font-family: var(--wc-display) !important;
+                    font-size: 18px !important; letter-spacing: 2px;
+                    border: none !important; border-radius: 0 !important;
+                    box-shadow: 4px 4px 0 var(--wc-navy);
+                    transition: transform .12s, box-shadow .12s;}
+.stButton > button:hover {transform: translate(-2px,-2px);
+                          box-shadow: 6px 6px 0 var(--wc-navy);
+                          background: #C40019 !important;}
+.stButton > button:active {transform: translate(2px,2px);
+                           box-shadow: 1px 1px 0 var(--wc-navy);}
 
-[data-testid="stMetric"] {background: #11161f; border-radius: 12px;
-                          border: 1px solid rgba(0,255,135,.35);
-                          padding: 10px 14px; transition: box-shadow .2s;}
-[data-testid="stMetric"]:hover {box-shadow: 0 0 18px rgba(0,255,135,.5);}
-[data-testid="stMetricValue"] {color: #FFD700;}
+[data-testid="stMetric"] {background: #FFFFFF; border-radius: 2px;
+                          border: 2px solid var(--wc-navy);
+                          padding: 10px 14px; box-shadow: var(--wc-shadow);
+                          transition: transform .15s;}
+[data-testid="stMetric"]:hover {transform: translate(-2px,-2px);}
+[data-testid="stMetricValue"] {color: var(--wc-red);
+                               font-family: var(--wc-display);}
 
-.group-card {background: #11161f; border: 1px solid rgba(255,215,0,.4);
-             border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;}
-.group-name {font-size: 24px; font-weight: 900; color: #FFD700;
-             margin-bottom: 8px; letter-spacing: 1px;}
+/* group cards with watermark letter */
+.group-card {position: relative; overflow: hidden; background: #FFFFFF;
+             border: 1px solid rgba(10,22,40,.12); border-radius: 2px;
+             border-top: 6px solid var(--wc-navy);
+             padding: 14px 16px; margin-bottom: 10px;
+             box-shadow: var(--wc-shadow);}
+.group-card::before {content: attr(data-letter); position: absolute;
+                     right: -8px; top: -36px;
+                     font-family: var(--wc-display); font-size: 150px;
+                     color: rgba(10,22,40,.05); pointer-events: none;}
+.group-name {font-family: var(--wc-display); font-size: 26px;
+             color: var(--wc-navy); margin-bottom: 8px;
+             letter-spacing: 2px;}
 .wc-table {width: 100%; border-collapse: collapse; font-size: 14px;
-           color: #eee;}
-.wc-table th {background: #FFD700; color: #0a0a0a; font-weight: 800;
-              padding: 6px 9px; text-align: left;}
-.wc-table td {padding: 6px 9px;
-              border-bottom: 1px solid rgba(255,255,255,.07);}
-.wc-table tr.adv  {background: rgba(0,255,135,.13);
-                   border-left: 4px solid #00FF87;}
-.wc-table tr.wild {background: rgba(255,215,0,.10);
-                   border-left: 4px solid #FFD700;}
-.wc-table tr.out  {background: rgba(255,77,87,.12);
-                   border-left: 4px solid #ff4d57;}
+           color: var(--wc-navy); position: relative;}
+.wc-table th {background: var(--wc-navy); color: #fff;
+              font-family: var(--wc-display); font-weight: 400;
+              letter-spacing: 1.4px; padding: 5px 9px; text-align: left;}
+.wc-table td {padding: 6px 9px; font-weight: 500;
+              border-bottom: 1px solid rgba(10,22,40,.08);}
+.wc-table tr.adv  {background: #E7F6EE; border-left: 5px solid var(--wc-green);}
+.wc-table tr.wild {background: #FFF6E0; border-left: 5px solid var(--wc-gold);}
+.wc-table tr.out  {background: #FBEAEA; border-left: 5px solid var(--wc-red);
+                   opacity: .75;}
 
-.bracket-slot {border-radius: 8px; padding: 4px 8px; margin: 2px 0;
-               font-size: 13px;}
-.confirmed {background: rgba(255,255,255,.08); border-left: 3px solid #00FF87;
-            color: #fff; font-weight: 700;}
-.projected {background: rgba(128,128,128,.10); border-left: 3px solid #777;
-            color: #969fab; font-style: italic;}
-.played {background: rgba(255,215,0,.14); border-left: 3px solid #FFD700;
-         color: #FFD700; font-weight: 800;}
+/* bracket slots */
+.bracket-slot {border-radius: 0; padding: 4px 9px; margin: 3px 0;
+               font-size: 13px; background: #FFFFFF;}
+.confirmed {border-left: 4px solid var(--wc-navy); color: var(--wc-navy);
+            font-weight: 700; border-top: 1px solid rgba(10,22,40,.12);
+            border-bottom: 1px solid rgba(10,22,40,.12);
+            border-right: 1px solid rgba(10,22,40,.12);}
+.projected {border-left: 4px solid #B9BDC4; color: #8A8F98;
+            font-style: italic; background: #EFEEE8;}
+.played {border-left: 4px solid var(--wc-gold); background: #FFF6E0;
+         color: var(--wc-navy); font-weight: 700;
+         font-family: var(--wc-display); letter-spacing: 1px;}
 
-.wc-footer {text-align: center; color: #9aa4b2; font-weight: 600;
-            margin-top: 40px; padding: 14px 0 4px 0;
-            border-top: 1px solid rgba(255,215,0,.35);}
+/* tabs: athletic underline */
+.stTabs [data-baseweb="tab"] {font-family: var(--wc-display);
+                              font-size: 17px; letter-spacing: 1.4px;
+                              color: var(--wc-navy);}
+.stTabs [aria-selected="true"] {color: var(--wc-red) !important;}
+
+.wc-footer {text-align: center; color: var(--wc-navy); font-weight: 700;
+            font-family: var(--wc-display); letter-spacing: 2px;
+            font-size: 16px; margin-top: 40px; padding: 16px 0 4px 0;
+            border-top: 4px solid var(--wc-navy);}
+.wc-footer em {color: var(--wc-red); font-style: normal;}
 
 @media (max-width: 640px) {
-  .wc-title {font-size: 28px;}
-  .teams-line {font-size: 16px;}
-  .vs {font-size: 18px;}
-  .group-name {font-size: 19px;}
+  .wc-title {font-size: 32px;}
+  .teams-line {font-size: 19px;}
+  .vs {font-size: 22px;}
+  .group-name {font-size: 21px;}
 }
 </style>
 """, unsafe_allow_html=True)
@@ -135,21 +196,25 @@ def festival_header():
     today = date.today()
     if today < KICKOFF_DAY:
         n = (KICKOFF_DAY - today).days
-        sub = f"⏳ Kick-off in {n} day{'s' if n != 1 else ''}"
+        sub = f"KICK-OFF IN {n} DAY{'S' if n != 1 else ''}"
     elif today <= FINAL_DAY:
-        sub = f"🔥 Tournament Day {(today - KICKOFF_DAY).days + 1} of 39"
+        sub = f"TOURNAMENT DAY {(today - KICKOFF_DAY).days + 1} OF 39"
     else:
-        sub = "🏆 Tournament complete"
+        sub = "TOURNAMENT COMPLETE"
     st.markdown(
-        f'<div class="wc-title">⚽ FIFA WORLD CUP 2026 🏆</div>'
-        f'<div class="wc-sub">{sub} · {today:%A %d %B %Y} · '
-        f'USA 🇺🇸 · Mexico 🇲🇽 · Canada 🇨🇦 🌍</div>',
+        f'<div class="wc-hero">'
+        f'<div class="wc-title"><span class="ol">FIFA WORLD CUP</span> '
+        f'20<span class="rd">26</span></div>'
+        f'<div class="wc-sub">{sub} · {today:%d %B %Y} · '
+        f'USA 🇺🇸 MEXICO 🇲🇽 CANADA 🇨🇦 · 48 TEAMS · ONE TROPHY</div>'
+        f'</div>',
         unsafe_allow_html=True)
 
 
 def festival_footer():
-    st.markdown('<div class="wc-footer">Powered by ⚽ data &amp; 🤖 AI '
-                'predictions · 🌍🎯🔥</div>', unsafe_allow_html=True)
+    st.markdown('<div class="wc-footer">EVERY MATCH A <em>BATTLE</em>. '
+                'EVERY PREDICTION A <em>STATEMENT</em>. — powered by ⚽ data '
+                '&amp; 🤖 AI predictions</div>', unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -173,16 +238,12 @@ def _projections(results_key):
 
 
 def prob_bar(p1, px, p2, name1, name2):
-    # favorite glows green, underdog burns red, draw stays neutral
-    if p1 >= p2:
-        c1, t1c, c2, t2c = "#00FF87", "#06250f", "#ff4d57", "#ffffff"
-    else:
-        c1, t1c, c2, t2c = "#ff4d57", "#ffffff", "#00FF87", "#06250f"
+    # brand colours: navy for team 1, warm grey for the draw, red for team 2
     return f"""
 <div class="prob-bar">
-  <div style="width:{p1 * 100:.1f}%;background:{c1};color:{t1c};">{name1} {p1 * 100:.0f}%</div>
-  <div style="width:{px * 100:.1f}%;background:#3a4150;color:#dfe5ec;">draw {px * 100:.0f}%</div>
-  <div style="width:{p2 * 100:.1f}%;background:{c2};color:{t2c};">{name2} {p2 * 100:.0f}%</div>
+  <div style="width:{p1 * 100:.1f}%;background:#0A1628;color:#fff;">{name1} {p1 * 100:.0f}%</div>
+  <div style="width:{px * 100:.1f}%;background:#C9C4B8;color:#0A1628;">draw {px * 100:.0f}%</div>
+  <div style="width:{p2 * 100:.1f}%;background:#E8001D;color:#fff;">{name2} {p2 * 100:.0f}%</div>
 </div>"""
 
 
@@ -331,7 +392,7 @@ def group_table_html(letter, rows):
                  f'<td>{r["P"]}</td><td>{r["W"]}</td><td>{r["D"]}</td>'
                  f'<td>{r["L"]}</td><td>{r["GF"]}</td><td>{r["GA"]}</td>'
                  f'<td>{r["GD"]:+d}</td><td><b>{r["Pts"]}</b></td></tr>')
-    return (f'<div class="group-card">'
+    return (f'<div class="group-card" data-letter="{letter}">'
             f'<div class="group-name">GROUP {letter} ⚽</div>'
             f'<table class="wc-table"><tr><th>#</th><th>Team</th><th>P</th>'
             f'<th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th>'
@@ -390,8 +451,8 @@ def slot_html(slot, result_cls=""):
 
 def page_bracket(schedule, results, predictor, projections):
     st.header("🏆 TOURNAMENT BRACKET — ROAD TO THE FINAL 🔥")
-    st.caption("⚪ bright = confirmed by real results · grey/italic = model "
-               "projection (with probability of filling that slot) · 🟡 gold = "
+    st.caption("navy = confirmed by real results · grey/italic = model "
+               "projection (with probability of filling that slot) · gold = "
                "score of a played match. Projections are never chained more "
                "than one round ahead — no champion prediction here, that's "
                "football's job. 🔥")
