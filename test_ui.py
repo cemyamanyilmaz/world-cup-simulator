@@ -1,6 +1,6 @@
 from streamlit.testing.v1 import AppTest
 
-PAGES = ["📅 Today's Matches", "🔮 Match Predictor", "📊 Group Stage",
+PAGES = ["📅 Today's Matches", "📊 Group Stage",
          "🏆 Bracket", "📈 Form Tracker"]
 
 for page in PAGES:

@@ -4,7 +4,9 @@ Run with:  streamlit run main.py
 """
 
 import json
-from datetime import date
+import re
+import time
+from datetime import date, datetime, timedelta, timezone
 
 import pandas as pd
 import streamlit as st
@@ -51,11 +53,19 @@ st.markdown("""
   --wc-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
   --wc-shadow: 8px 8px 0 rgba(10,22,40,.08);
 }
-html, body, [data-testid="stAppViewContainer"] {background: var(--wc-bg);}
+/* force light surfaces even if Streamlit's base theme resolves dark
+   (e.g. when launched from a folder without .streamlit/config.toml) */
+html, body, .stApp,
+[data-testid="stAppViewContainer"] {background: var(--wc-bg) !important;}
 body, p, span, div {font-family: 'DM Sans', 'Segoe UI', sans-serif;}
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li {color: var(--wc-navy);}
 [data-testid="stHeader"] {background: rgba(0,0,0,0);}
-[data-testid="stSidebar"] {background: #FFFFFF;
+[data-testid="stSidebar"] {background: #FFFFFF !important;
                            border-right: 3px solid var(--wc-navy);}
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] span,
+[data-testid="stSidebar"] label, [data-testid="stSidebar"] summary
+    {color: var(--wc-navy) !important;}
 h1, h2, h3 {font-family: var(--wc-display) !important;
             font-weight: 400 !important; letter-spacing: 1.5px;
             color: var(--wc-navy) !important; text-transform: uppercase;}
@@ -99,6 +109,17 @@ h1, h2, h3 {font-family: var(--wc-display) !important;
           margin-bottom: 8px; letter-spacing: 1.4px;
           text-transform: uppercase;}
 .kick {color: #6E7681; font-size: 13px;}
+
+/* live match badge + last-update stamp */
+.live-badge {background: var(--wc-green); color: #fff; font-weight: 800;
+             padding: 2px 9px; font-size: 11px; letter-spacing: 1.5px;
+             display: inline-block; margin-right: 6px;
+             animation: wc-pulse 1.4s ease-in-out infinite;}
+@keyframes wc-pulse {50% {opacity: .45;}}
+.last-upd {font-family: var(--wc-display); letter-spacing: 1.5px;
+           color: var(--wc-navy); font-size: 15px; background: #fff;
+           border: 2px solid var(--wc-navy); padding: 3px 12px;
+           display: inline-block; box-shadow: 3px 3px 0 rgba(10,22,40,.12);}
 
 .prob-bar {display: flex; height: 26px; border-radius: 0; overflow: hidden;
            font-size: 13px; font-weight: 700; margin: 8px 0;
@@ -237,6 +258,56 @@ def _projections(results_key):
     return {g: pred.simulate_group(g, n=1500) for g in GROUPS}
 
 
+# ---------------------------------------------------------------------------
+# live score updates (auto-refresh from the openfootball feed)
+# ---------------------------------------------------------------------------
+REFRESH_EVERY = 300        # poll the feed every 5 minutes
+MIN_FETCH_GAP = 240        # never hit the network more often than this
+
+
+def kickoff_utc(entry):
+    """Parse '20:00 UTC-6' + date into an aware UTC datetime (or None)."""
+    m = re.match(r"(\d{1,2}):(\d{2}) UTC([+-]\d+)", entry.get("time") or "")
+    if not m:
+        return None
+    local = datetime.fromisoformat(entry["date"]).replace(
+        hour=int(m.group(1)), minute=int(m.group(2)), tzinfo=timezone.utc)
+    return local - timedelta(hours=int(m.group(3)))
+
+
+def is_live(entry, results):
+    """True while a match should be in play and no final score is stored."""
+    ko = kickoff_utc(entry)
+    if ko is None or entry["id"] in results:
+        return False
+    return ko <= datetime.now(timezone.utc) <= ko + timedelta(minutes=155)
+
+
+@st.fragment(run_every=REFRESH_EVERY)
+def live_updater():
+    """Sidebar fragment: re-runs every 5 minutes, pulls real scores, and
+    forces a full app rerun (fresh momentum/form/projections) on new data."""
+    now_ts = time.time()
+    if now_ts - st.session_state.get("last_fetch_ts", 0) >= MIN_FETCH_GAP:
+        st.session_state.last_fetch_ts = now_ts
+        _, err = data_store.refresh_from_feed()
+        if err is None:
+            st.session_state.last_update = datetime.now().strftime("%H:%M")
+            key = json.dumps(data_store.load_results()["results"],
+                             sort_keys=True)
+            if st.session_state.get("results_key") != key:
+                had_key = "results_key" in st.session_state
+                st.session_state.results_key = key
+                if had_key:                      # new real result arrived
+                    st.cache_data.clear()
+                    st.toast("📡 Yeni skor geldi — tahminler güncellendi!",
+                             icon="⚽")
+                    st.rerun(scope="app")
+    st.markdown(f'<div class="last-upd">📡 SON GÜNCELLEME: '
+                f'{st.session_state.get("last_update", "—")}</div>',
+                unsafe_allow_html=True)
+
+
 def prob_bar(p1, px, p2, name1, name2):
     # brand colours: navy for team 1, warm grey for the draw, red for team 2
     return f"""
@@ -293,9 +364,11 @@ def page_today(schedule, results, predictor):
         left = f"{flag(t1)} {t1}" if known else t1
         right = f"{t2} {flag(t2)}" if known else t2
         stage = e["group"] and f"Group {e['group']}" or e["stage"]
+        badge = ('<span class="live-badge">● CANLI</span>'
+                 if is_live(e, results["results"]) else '')
         with st.container():
             st.markdown(f"""<div class="match-card">
-<div class="kickoff">⏰ KICK-OFF {e['time']} · 🏟️ {e['venue']} · 🎯 {stage}</div>
+<div class="kickoff">{badge}⏰ KICK-OFF {e['time']} · 🏟️ {e['venue']} · 🎯 {stage}</div>
 <div class="teams-line"><span>{left}</span><span class="vs">VS</span><span>{right}</span></div>
 </div>""", unsafe_allow_html=True)
             if not known:
@@ -328,56 +401,6 @@ def page_today(schedule, results, predictor):
         celebrated.update(fresh)
         st.balloons()
         st.toast("🎉 The model called it! Correct prediction! ⚽🏆")
-
-
-# ---------------------------------------------------------------------------
-# PAGE 2 — Match predictor
-# ---------------------------------------------------------------------------
-def page_predictor(schedule, results, predictor, projections):
-    st.header("🔮 MATCH PREDICTOR 🎯")
-    names = sorted(TEAMS)
-    c1, c2, c3 = st.columns([4, 4, 2])
-    t1 = c1.selectbox("Team 1", names, index=names.index("Argentina"))
-    t2 = c2.selectbox("Team 2", names, index=names.index("Spain"))
-    knockout = c3.toggle("Knockout rules", value=False)
-    if t1 == t2:
-        st.warning("Pick two different teams.")
-        return
-    pred = predictor.predict(t1, t2, knockout=knockout,
-                             match_date=date.today().isoformat())
-    show_prediction(pred, knockout=knockout)
-
-    st.subheader("Head-to-head & form")
-    meetings = predictor.tournament_meetings(t1, t2)
-    if meetings:
-        for e, res, a, b in meetings:
-            sc = f"{res['s1']}-{res['s2']}"
-            if res.get("pens"):
-                sc += f" ({res['pens'][0]}-{res['pens'][1]} p)"
-            st.markdown(f"- {e['round']}: **{a} {sc} {b}**")
-    else:
-        st.caption("These sides have not met in this tournament yet "
-                    "(historical head-to-head is not part of the live dataset).")
-    for name in (t1, t2):
-        pf = PRE_FORM.get(name)
-        mom = predictor.momentum(name)
-        bits = [f"momentum {mom:+.0f}"]
-        if pf:
-            bits.insert(0, f"warm-up form **{pf['last5']}** — {pf['note']}")
-        st.markdown(f"**{flag(name)} {name}** · " + " · ".join(bits))
-        for player, status in INJURIES.get(name, []):
-            st.markdown(f"  - 🚑 {player} — {status}")
-
-    st.subheader("🏅 Who wins the group?")
-    letter = st.selectbox("Group", sorted(GROUPS),
-                          format_func=lambda g: f"Group {g}")
-    pos_probs, order, _ = projections[letter]
-    df = pd.DataFrame([{"Team": f"{flag(t)} {t}",
-                        "Win group": f"{pos_probs[t][0] * 100:.0f}%",
-                        "Top 2": f"{(pos_probs[t][0] + pos_probs[t][1]) * 100:.0f}%",
-                        "3rd": f"{pos_probs[t][2] * 100:.0f}%"}
-                       for t in order])
-    st.dataframe(df, hide_index=True, width="stretch")
 
 
 # ---------------------------------------------------------------------------
@@ -611,8 +634,10 @@ def main():
     st.sidebar.title("⚽ WORLD CUP 2026 🏆")
     st.sidebar.caption("Match-by-match predictor · 🇺🇸 USA · 🇲🇽 Mexico · "
                        "🇨🇦 Canada")
+    with st.sidebar:
+        live_updater()
     page = st.sidebar.radio("Pages", [
-        "📅 Today's Matches", "🔮 Match Predictor", "📊 Group Stage",
+        "📅 Today's Matches", "📊 Group Stage",
         "🏆 Bracket", "📈 Form Tracker"], label_visibility="collapsed")
 
     schedule, results, predictor, projections = get_state()
@@ -621,8 +646,6 @@ def main():
 
     if page.startswith("📅"):
         page_today(schedule, results, predictor)
-    elif page.startswith("🔮"):
-        page_predictor(schedule, results, predictor, projections)
     elif page.startswith("📊"):
         page_groups(schedule, results, predictor, projections)
     elif page.startswith("🏆"):
